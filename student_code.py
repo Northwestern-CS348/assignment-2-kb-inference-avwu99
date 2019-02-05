@@ -128,6 +128,9 @@ class KnowledgeBase(object):
         printv("Retracting {!r}", 0, verbose, [fact])
         ####################################################
         # Student code goes here
+
+        # I tried, couldn't get it to work :(
+
         
 
 class InferenceEngine(object):
@@ -146,4 +149,23 @@ class InferenceEngine(object):
             [fact.statement, rule.lhs, rule.rhs])
         ####################################################
         # Student code goes here
-        
+        binding = match(fact.statement,rule.lhs[0])
+        if binding:
+            if len(rule.lhs) == 1:      # If there's only one predicate, we infer a fact, else we infer a rule
+                newFact = Fact(instantiate(rule.rhs, binding))
+                fact.supports_facts.append(newFact)
+                rule.supports_facts.append(newFact)
+                if [fact, rule] not in newFact.supported_by:   # We want to check first to make sure not doubling up.
+                    newFact.supported_by.append([fact, rule])
+                if newFact not in kb.facts:
+                    kb.kb_assert(newFact)
+
+            else:       # Using other lhs statements to create a new rule
+                newStatement = []
+                for lhsIndex in rule.lhs[1:]:
+                    newStatement.append(instantiate(lhsIndex, binding))  # New statements to make another rhs
+                newRule = Rule([newStatement, instantiate(rule.rhs, binding)])
+                kb.kb_assert(newRule)                        #   Updating supports and kb
+                fact.supports_rules.append(newRule)
+                rule.supports_rules.append(newRule)
+
